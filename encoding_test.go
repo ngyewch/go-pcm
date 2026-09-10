@@ -33,14 +33,14 @@ func TestEncoding(t *testing.T) {
 	testEncodingToString(t, EncodingS32BE, "s32be")
 	testEncodingToString(t, EncodingF32BE, "f32be")
 
-	testEncodingEndianness(t, EncodingS16LE, EndiannessLittleEndian)
-	testEncodingEndianness(t, EncodingS24LE, EndiannessLittleEndian)
-	testEncodingEndianness(t, EncodingS32LE, EndiannessLittleEndian)
-	testEncodingEndianness(t, EncodingF32LE, EndiannessLittleEndian)
-	testEncodingEndianness(t, EncodingS16BE, EndiannessBigEndian)
-	testEncodingEndianness(t, EncodingS24BE, EndiannessBigEndian)
-	testEncodingEndianness(t, EncodingS32BE, EndiannessBigEndian)
-	testEncodingEndianness(t, EncodingF32BE, EndiannessBigEndian)
+	testEncodingByteOrder(t, EncodingS16LE, LittleEndian)
+	testEncodingByteOrder(t, EncodingS24LE, LittleEndian)
+	testEncodingByteOrder(t, EncodingS32LE, LittleEndian)
+	testEncodingByteOrder(t, EncodingF32LE, LittleEndian)
+	testEncodingByteOrder(t, EncodingS16BE, BigEndian)
+	testEncodingByteOrder(t, EncodingS24BE, BigEndian)
+	testEncodingByteOrder(t, EncodingS32BE, BigEndian)
+	testEncodingByteOrder(t, EncodingF32BE, BigEndian)
 }
 
 func testEncodingFromString(t *testing.T, s string, expected Encoding) {
@@ -54,6 +54,6 @@ func testEncodingToString(t *testing.T, encoding Encoding, expected string) {
 	assert.Equal(t, expected, encoding.String())
 }
 
-func testEncodingEndianness(t *testing.T, encoding Encoding, expected Endianness) {
-	assert.Equal(t, expected, encoding.Endianness())
+func testEncodingByteOrder(t *testing.T, encoding Encoding, expected ByteOrder) {
+	assert.Equal(t, expected, encoding.ByteOrder())
 }

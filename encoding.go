@@ -51,15 +51,15 @@ func (encoding Encoding) BaseEncoding() BaseEncoding {
 	}
 }
 
-// Endianness returns the endianness.
-func (encoding Encoding) Endianness() Endianness {
+// ByteOrder returns the byte order.
+func (encoding Encoding) ByteOrder() ByteOrder {
 	switch encoding {
 	case EncodingS16LE, EncodingS24LE, EncodingS32LE, EncodingF32LE:
-		return EndiannessLittleEndian
+		return LittleEndian
 	case EncodingS16BE, EncodingS24BE, EncodingS32BE, EncodingF32BE:
-		return EndiannessBigEndian
+		return BigEndian
 	default:
-		return EndiannessUnknown
+		return nil
 	}
 }
 
@@ -75,7 +75,7 @@ func (encoding Encoding) BytesPerSample() int {
 
 // Float64Func returns a function for converting a byte slice representation of the sample to a float64 value.
 func (encoding Encoding) Float64Func() func(b []byte) float64 {
-	f := encoding.BaseEncoding().Float64Func(encoding.Endianness().ValueGetter())
+	f := encoding.BaseEncoding().Float64Func(encoding.ByteOrder().ValueGetter())
 	if f == nil {
 		return func(_ []byte) float64 {
 			return math.NaN()
@@ -88,7 +88,7 @@ func (encoding Encoding) Float64Func() func(b []byte) float64 {
 
 // PutFloat64Func returns a function for converting a float64 value to its byte slice representation.
 func (encoding Encoding) PutFloat64Func() func(b []byte, v float64) {
-	f := encoding.BaseEncoding().PutFloat64Func(encoding.Endianness().ValuePutter())
+	f := encoding.BaseEncoding().PutFloat64Func(encoding.ByteOrder().ValuePutter())
 	if f == nil {
 		return func(_ []byte, _ float64) {
 			// do nothing
@@ -125,7 +125,7 @@ func (encoding Encoding) Convert(b []byte, targetEncoding Encoding) ([]byte, err
 	targetBytesPerSample := targetEncoding.BytesPerSample()
 	if (sourceBytesPerSample == targetBytesPerSample) &&
 		(encoding.BaseEncoding() == targetEncoding.BaseEncoding()) &&
-		encoding.Endianness().IsReverseOf(targetEncoding.Endianness()) {
+		encoding.ByteOrder().IsReverseOf(targetEncoding.ByteOrder()) {
 		targetBuffer := make([]byte, len(b))
 		copy(targetBuffer, b)
 		for i := 0; i < len(targetBuffer); i += targetBytesPerSample {

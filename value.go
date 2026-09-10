@@ -8,25 +8,6 @@ const (
 	maxInt24 = (1 << (24 - 1)) - 1
 )
 
-var (
-	// LittleEndianValueGetter is the little-endian implementation of ValueGetter.
-	LittleEndianValueGetter = valueGetter{
-		ByteOrder: LittleEndian,
-	}
-	// BigEndianValueGetter is the big-endian implementation of ValueGetter.
-	BigEndianValueGetter = valueGetter{
-		ByteOrder: BigEndian,
-	}
-	// LittleEndianValuePutter is the little-endian implementation of ValuePutter.
-	LittleEndianValuePutter = valuePutter{
-		ByteOrder: LittleEndian,
-	}
-	// BigEndianValuePutter is the big-endian implementation of ValuePutter.
-	BigEndianValuePutter = valuePutter{
-		ByteOrder: BigEndian,
-	}
-)
-
 // ValueGetter converts byte slices to a float64 value.
 type ValueGetter interface {
 	S16(b []byte) float64

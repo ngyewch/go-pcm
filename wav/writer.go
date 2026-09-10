@@ -30,11 +30,11 @@ func NewWriter(path string, channels uint16, samplingRate uint32, encoding pcm.E
 
 	var containerFormat string
 	var appendByteOrder binary.AppendByteOrder
-	switch encoding.Endianness() {
-	case pcm.EndiannessLittleEndian:
+	switch encoding.ByteOrder() {
+	case pcm.LittleEndian:
 		containerFormat = "RIFF"
 		appendByteOrder = binary.LittleEndian
-	case pcm.EndiannessBigEndian:
+	case pcm.BigEndian:
 		containerFormat = "RIFX"
 		appendByteOrder = binary.BigEndian
 	default:

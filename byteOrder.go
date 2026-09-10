@@ -21,21 +21,26 @@ type ByteOrder interface {
 	Uint24(b []byte) uint32
 	PutUint24(b []byte, v uint32)
 	PutInt24(b []byte, v int32)
+	ValueGetter() ValueGetter
+	ValuePutter() ValuePutter
+	IsReverseOf(otherByteOrder ByteOrder) bool
 }
 
 type pcmByteOrder struct {
 	binary.ByteOrder
 }
 
+func newPCMByteOrder(byteOrder binary.ByteOrder) *pcmByteOrder {
+	return &pcmByteOrder{
+		ByteOrder: byteOrder,
+	}
+}
+
 var (
 	// BigEndian is the big-endian implementation of ByteOrder
-	BigEndian = pcmByteOrder{
-		ByteOrder: binary.BigEndian,
-	}
+	BigEndian = newPCMByteOrder(binary.BigEndian)
 	// LittleEndian is the little-endian implementation of ByteOrder
-	LittleEndian = pcmByteOrder{
-		ByteOrder: binary.LittleEndian,
-	}
+	LittleEndian = newPCMByteOrder(binary.LittleEndian)
 )
 
 func (byteOrder pcmByteOrder) Int16(b []byte) int16 {
@@ -100,4 +105,34 @@ func (byteOrder pcmByteOrder) PutUint24(b []byte, v uint32) {
 
 func (byteOrder pcmByteOrder) PutInt24(b []byte, v int32) {
 	byteOrder.PutUint32(b, uint32(v))
+}
+
+func (byteOrder pcmByteOrder) ValueGetter() ValueGetter {
+	return valueGetter{
+		ByteOrder: byteOrder,
+	}
+}
+
+func (byteOrder pcmByteOrder) ValuePutter() ValuePutter {
+	return valuePutter{
+		ByteOrder: byteOrder,
+	}
+}
+
+func (byteOrder pcmByteOrder) IsReverseOf(otherByteOrder ByteOrder) bool {
+	if byteOrder == otherByteOrder {
+		return false
+	}
+	otherPCMByteOrder, ok := otherByteOrder.(*pcmByteOrder)
+	if !ok {
+		return false
+	}
+	switch byteOrder.ByteOrder {
+	case binary.LittleEndian:
+		return otherPCMByteOrder.ByteOrder == binary.BigEndian
+	case binary.BigEndian:
+		return otherPCMByteOrder.ByteOrder == binary.LittleEndian
+	default:
+		return false
+	}
 }
