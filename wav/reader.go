@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/ngyewch/go-pcm"
 )
@@ -12,6 +13,7 @@ import (
 type Reader struct {
 	f        *os.File
 	header   *fmtSubChunk
+	dataLen  uint32
 	encoding pcm.Encoding
 }
 
@@ -24,6 +26,7 @@ func NewReader(path string) (*Reader, error) {
 
 	var byteOrder binary.ByteOrder
 	var header *fmtSubChunk
+	var dataLen uint32
 
 	err = func() error {
 		helper := readerHelper{
@@ -87,6 +90,7 @@ func NewReader(path string) (*Reader, error) {
 				if !fmtSubChunkProcessed {
 					return fmt.Errorf("fmt sub-chunk not found")
 				}
+				dataLen = subChunkSize
 				return nil
 			}
 		}
@@ -105,6 +109,7 @@ func NewReader(path string) (*Reader, error) {
 	return &Reader{
 		f:        f,
 		header:   header,
+		dataLen:  dataLen,
 		encoding: encoding,
 	}, nil
 }
@@ -128,6 +133,11 @@ func (r *Reader) NumChannels() uint16 {
 // SampleRate returns the sample rate (Hz).
 func (r *Reader) SampleRate() uint32 {
 	return r.header.SampleRate
+}
+
+// Duration return the duration.
+func (r *Reader) Duration() time.Duration {
+	return time.Duration((float64(r.dataLen) / float64(r.header.ByteRate)) * float64(time.Second))
 }
 
 func (r *Reader) Read(b []byte) (n int, err error) {

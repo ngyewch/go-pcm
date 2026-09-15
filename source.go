@@ -1,6 +1,9 @@
 package pcm
 
-import "io"
+import (
+	"io"
+	"time"
+)
 
 // Source is a PCM data source.
 type Source interface {
@@ -14,4 +17,7 @@ type Source interface {
 
 	// SampleRate returns the sample rate (Hz).
 	SampleRate() uint32
+
+	// Duration return the duration.
+	Duration() time.Duration
 }
