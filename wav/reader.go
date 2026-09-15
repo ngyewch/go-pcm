@@ -3,6 +3,7 @@ package wav
 import (
 	"encoding/binary"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -92,6 +93,12 @@ func NewReader(path string) (*Reader, error) {
 				}
 				dataLen = subChunkSize
 				return nil
+
+			default:
+				_, err = f.Seek(int64(subChunkSize), io.SeekCurrent)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}()
