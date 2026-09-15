@@ -36,3 +36,12 @@ func (helper readerHelper) ReadUint32() (uint32, error) {
 	}
 	return helper.byteOrder.Uint32(buffer[:]), nil
 }
+
+func (helper readerHelper) ReadBytes(n int) ([]byte, error) {
+	buffer := make([]byte, n)
+	_, err := io.ReadFull(helper.r, buffer)
+	if err != nil {
+		return nil, err
+	}
+	return buffer, nil
+}
