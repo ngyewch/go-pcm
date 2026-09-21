@@ -144,7 +144,11 @@ func NewWriter(path string, channels uint16, samplingRate uint32, encoding pcm.E
 }
 
 func (w *Writer) Write(b []byte) (int, error) {
-	targetBytes, err := w.sourceEncoding.Convert(b, w.encoding)
+	sourceBytesPerSample := w.sourceEncoding.BytesPerSample()
+	targetBytesPerSample := w.encoding.BytesPerSample()
+	sourceSampleCount := len(b) / sourceBytesPerSample
+	targetBytes := make([]byte, sourceSampleCount*targetBytesPerSample)
+	err := w.sourceEncoding.ConvertSlice(b, w.encoding, targetBytes)
 	if err != nil {
 		return 0, err
 	}

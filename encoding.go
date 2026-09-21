@@ -111,43 +111,83 @@ func (encoding Encoding) PutFloat64(b []byte, v float64) {
 	f(b, v)
 }
 
-// Convert converts a byte slice from this encoding to the target encoding.
-func (encoding Encoding) Convert(b []byte, targetEncoding Encoding) ([]byte, error) {
+// Convert converts a sample from this encoding to the target encoding.
+func (encoding Encoding) Convert(sourceBytes []byte, targetEncoding Encoding, targetBytes []byte) error {
 	sourceBytesPerSample := encoding.BytesPerSample()
-	if len(b)%sourceBytesPerSample != 0 {
-		return nil, fmt.Errorf("data length must be a multiple of %d bytes", sourceBytesPerSample)
+	targetBytesPerSample := targetEncoding.BytesPerSample()
+
+	if len(sourceBytes) != sourceBytesPerSample {
+		return fmt.Errorf("incorrect source bytes length")
+	}
+	if len(targetBytes) != targetBytesPerSample {
+		return fmt.Errorf("incorrect target bytes length")
 	}
 
 	if encoding == targetEncoding {
-		return b, nil
+		copy(targetBytes, sourceBytes)
+		return nil
 	}
 
-	targetBytesPerSample := targetEncoding.BytesPerSample()
 	if (sourceBytesPerSample == targetBytesPerSample) &&
 		(encoding.BaseEncoding() == targetEncoding.BaseEncoding()) &&
 		encoding.ByteOrder().IsReverseOf(targetEncoding.ByteOrder()) {
-		targetBuffer := make([]byte, len(b))
-		copy(targetBuffer, b)
-		for i := 0; i < len(targetBuffer); i += targetBytesPerSample {
-			sourceBytes := targetBuffer[i : i+targetBytesPerSample]
-			slices.Reverse(sourceBytes)
-		}
-		return targetBuffer, nil
+		copy(targetBytes, sourceBytes)
+		slices.Reverse(targetBytes)
+		return nil
 	}
 
-	sampleCount := len(b) / sourceBytesPerSample
-	targetBuffer := make([]byte, sampleCount*targetBytesPerSample)
 	float64Func := encoding.Float64Func()
 	putFloat64Func := targetEncoding.PutFloat64Func()
-	for i := range sampleCount {
-		sourceOffset := i * sourceBytesPerSample
-		targetOffset := i * targetBytesPerSample
-		sourceBytes := b[sourceOffset : sourceOffset+sourceBytesPerSample]
-		targetBytes := targetBuffer[targetOffset : targetOffset+targetBytesPerSample]
-		v := float64Func(sourceBytes)
-		putFloat64Func(targetBytes, v)
+	v := float64Func(sourceBytes)
+	putFloat64Func(targetBytes, v)
+	return nil
+}
+
+// ConvertSlice converts a sample slice from this encoding to the target encoding.
+func (encoding Encoding) ConvertSlice(sourceBytes []byte, targetEncoding Encoding, targetBytes []byte) error {
+	sourceBytesPerSample := encoding.BytesPerSample()
+	if (len(sourceBytes) % sourceBytesPerSample) != 0 {
+		return fmt.Errorf("source bytes length is not a multiple of source bytes per sample")
 	}
-	return targetBuffer, nil
+	targetBytesPerSample := targetEncoding.BytesPerSample()
+	if (len(targetBytes) % targetBytesPerSample) != 0 {
+		return fmt.Errorf("target bytes length is not a multiple of target bytes per sample")
+	}
+	sourceSampleCount := len(sourceBytes) / sourceBytesPerSample
+	targetSampleCount := len(targetBytes) / targetBytesPerSample
+	if sourceSampleCount != targetSampleCount {
+		return fmt.Errorf("source sample count is not the same as target sample count")
+	}
+
+	if encoding == targetEncoding {
+		copy(targetBytes, sourceBytes)
+		return nil
+	}
+
+	if (sourceBytesPerSample == targetBytesPerSample) &&
+		(encoding.BaseEncoding() == targetEncoding.BaseEncoding()) &&
+		encoding.ByteOrder().IsReverseOf(targetEncoding.ByteOrder()) {
+		copy(targetBytes, sourceBytes)
+		for i := 0; i < len(targetBytes); i += targetBytesPerSample {
+			b := targetBytes[i : i+targetBytesPerSample]
+			slices.Reverse(b)
+		}
+		return nil
+	}
+
+	float64Func := encoding.Float64Func()
+	putFloat64Func := targetEncoding.PutFloat64Func()
+	sourceOffset := 0
+	targetOffset := 0
+	for range sourceSampleCount {
+		sourceSampleBytes := sourceBytes[sourceOffset : sourceOffset+sourceBytesPerSample]
+		targetSampleBytes := targetBytes[targetOffset : targetOffset+targetBytesPerSample]
+		v := float64Func(sourceSampleBytes)
+		putFloat64Func(targetSampleBytes, v)
+		sourceOffset += sourceBytesPerSample
+		targetOffset += targetBytesPerSample
+	}
+	return nil
 }
 
 // EncodingFromString returns the Encoding from its ID.
